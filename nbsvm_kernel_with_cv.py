@@ -67,7 +67,7 @@ test_x = test_doc.sign().astype(np.float32)
 def pr(x, y_i, y):
     # x 为 doc X vocab
     # 故此，这里 p 就是对 doc 求和，得到每个词在属于某个分类文档中出现过的文档数 (前面已经去掉了词频，改为是否出现)
-    p = train_x[y == y_i].sum(0)
+    p = x[y == y_i].sum(0)
     # 除以属于某个分类的文档总数，得到各个词在属于某个分类的文档中出现的几率；为 len(vocabulary) 的矢量
     return (p + 1) / ((y == y_i).sum() + 1)
 
