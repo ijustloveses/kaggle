@@ -9,7 +9,6 @@ import pandas as pd
 import numpy as np
 from nltk.tokenize import wordpunct_tokenize
 from nltk.stem.snowball import EnglishStemmer
-from nltk.stem import WordNetLemmatizer
 from sklearn.linear_model import LogisticRegression as LR
 from sklearn.feature_extraction.text import TfidfVectorizer as TV
 from sklearn.metrics import log_loss
@@ -18,7 +17,7 @@ from sklearn.pipeline import Pipeline
 from scipy import sparse
 
 """
-Part 1. Research on dataset & preprocessing
+Part 1. Research on dataset
 """
 
 train = pd.read_csv('./data/train.csv')
@@ -49,11 +48,21 @@ print(train[['toxic', 'severe_toxic', 'obscene', 'threat', 'insult', 'identity_h
 
 
 """
-Part 2. model
+Part 2. preprocessing
+"""
+
+stemmer = EnglishStemmer()
+decoder = lambda x: x.decode('cp850')
+train['comment_text'] = train['comment_text'].apply(str.lower).apply(wordpunct_tokenize).apply(' '.join).apply(decoder).apply(stemmer.stem)
+test['comment_text'] = test['comment_text'].apply(str.lower).apply(wordpunct_tokenize).apply(' '.join).apply(decoder).apply(stemmer.stem)
+
+
+"""
+Part 3. model
 """
 
 # vec = CV(ngram_range=(1, 1), tokenizer=wordpunct_tokenize, max_features=1500000)
-vec = TV()
+vec = TV(ngram_range=(1, 2))
 model = LR()
 
 # 每个文档使用 vocabulary 中的词的词频表示
@@ -62,7 +71,7 @@ test_doc = vec.transform(test['comment_text'])
 
 
 """
-Part 3. Validation
+Part 4. Validation
 """
 
 # run model
@@ -72,7 +81,6 @@ n_splits = 5
 total_losses = []
 for i, j in enumerate(label_cols):
     # 对每个细分类分别进行预测
-    print('fit', j)
     preds_splits = np.zeros(len(test), dtype=np.float32)
     losses = []
     for trn, val in StratifiedKFold(n_splits=n_splits).split(train_doc, train[j]):
@@ -84,7 +92,7 @@ for i, j in enumerate(label_cols):
     preds[:, i] = preds_splits / n_splits
     loss = np.mean(losses)
     total_losses.append(loss)
-    print('val loss: ', loss)
+    print(j, 'val loss: ', loss)
 print('overall val loss:', np.mean(total_losses))
 
 # dump to csv
