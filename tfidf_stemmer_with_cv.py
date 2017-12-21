@@ -10,6 +10,7 @@ import numpy as np
 from nltk.tokenize import wordpunct_tokenize
 from nltk.stem.snowball import EnglishStemmer
 from sklearn.linear_model import LogisticRegression as LR
+from sklearn.svm import SVC
 from sklearn.feature_extraction.text import TfidfVectorizer as TV
 from sklearn.metrics import log_loss
 from sklearn.model_selection import StratifiedKFold
@@ -61,9 +62,9 @@ test['comment_text'] = test['comment_text'].apply(str.lower).apply(wordpunct_tok
 Part 3. model
 """
 
-# vec = CV(ngram_range=(1, 1), tokenizer=wordpunct_tokenize, max_features=1500000)
-vec = TV(ngram_range=(1, 2))
-model = LR()
+# vec = TV(ngram_range=(1, 2))
+vec = TV()
+model = SVC(kernel='linear', probability=True)  # so model will provide predict_proba method
 
 # 每个文档使用 vocabulary 中的词的词频表示
 train_doc = vec.fit_transform(train['comment_text'])

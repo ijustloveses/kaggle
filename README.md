@@ -70,3 +70,21 @@ overall val loss: 0.0602515382409
 ```
 
 效果一般；同样，假如 ngram_range=[1,2] 结果反而变差
+
+##### 尝试 3
+
+- 原始文字加入 EnglishStemmer().stem
+- tfidf 模型 TV()
+- linear svm 模型 SVC(kernel='linear', probability=True)
+
+
+
+### keras_bilstm.py
+
+模型：bi-lstm with 2 dropout & 1 fc & sigmoid
+
+- 原始文字直接转 one-hot with max_features = 20000
+- maxlen = 1000
+- post padding
+- batch_size = 32
+- validation_split = 1/4 
