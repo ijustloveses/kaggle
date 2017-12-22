@@ -77,14 +77,58 @@ overall val loss: 0.0602515382409
 - tfidf 模型 TV()
 - linear svm 模型 SVC(kernel='linear', probability=True)
 
+```
+toxic val loss:  0.116094507485
+severe_toxic val loss:  0.0320463197279
+obscene val loss:  0.0717947969416
+threat val loss:  0.0118153071692
+insult val loss:  0.090121870556
+identity_hate val loss:  0.0307155570632
+
+overall val loss: 0.0587647264905
+```
+
+##### 尝试 4
+
+- 原始文字加入 EnglishStemmer().stem
+- tfidf 模型 TV()
+- rbf svm 模型 SVC(kernel='rbf', probability=True)
+
+
+
 
 
 ### keras_bilstm.py
 
 模型：bi-lstm with 2 dropout & 1 fc & sigmoid
 
+##### 尝试 1
+
 - 原始文字直接转 one-hot with max_features = 20000
+- maxlen = 1000
+- embedding size = 128
+- post padding
+- batch_size = 32
+- validation_split = 1/4 
+
+```
+Epoch 3/10
+71872/71888 [============================>.] - ETA: 0s - loss: 0.0416 - acc: 0.9841Epoch 00002: val_loss improved from 0.05249 to 0.05095, sav71888/71888 [==============================] - 3687s - loss: 0.0416 - acc: 0.9841 - val_loss: 0.0509 - val_acc: 0.9817
+```
+
+提交 Kaggle，0.051， rank 137/360
+
+##### 尝试 2
+
+- 使用 GoogleNews-vectors-negative300.bin word2vec。由于该模型中 words 太多，故此使用 training data 中的 words 做了过滤
+- 过滤之后，one-hot with max_features = 88242
+- embedding size = 300
 - maxlen = 1000
 - post padding
 - batch_size = 32
 - validation_split = 1/4 
+
+```
+```
+
+提交 Kaggle

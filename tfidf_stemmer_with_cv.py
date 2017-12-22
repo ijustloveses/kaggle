@@ -64,7 +64,7 @@ Part 3. model
 
 # vec = TV(ngram_range=(1, 2))
 vec = TV()
-model = SVC(kernel='linear', probability=True)  # so model will provide predict_proba method
+model = SVC(kernel='rbf', probability=True)  # so model will provide predict_proba method
 
 # 每个文档使用 vocabulary 中的词的词频表示
 train_doc = vec.fit_transform(train['comment_text'])

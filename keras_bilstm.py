@@ -2,6 +2,11 @@
 
 """
 https://www.kaggle.com/CVxTz/keras-bidirectional-lstm-baseline-lb-0-051
+
+./GoogleNews-vectors-negative300.bin word2vec model 有 900000000 个字符，过大，直接使用 max_features = 900000000 训练会导致下面错误：
+UserWarning: Converting sparse IndexedSlices to a dense Tensor with 900000000 elements. This may consume a large amount of memory.
+
+故此，这里做了过滤，只保留训练语料中有的 words
 """
 
 from __future__ import print_function
@@ -15,6 +20,8 @@ from keras.models import Model
 from keras.layers import Dense, Embedding, Input, LSTM, Bidirectional, GlobalMaxPool1D, Dropout
 from keras.preprocessing import text, sequence
 from keras.callbacks import EarlyStopping, ModelCheckpoint
+
+import gensim
 
 """
 Part 1. Research on dataset
@@ -53,17 +60,49 @@ print(train[['toxic', 'severe_toxic', 'obscene', 'threat', 'insult', 'identity_h
 Part 2. preprocessing
 """
 
-# stemmer = EnglishStemmer()
-# train['comment_text'] = train['comment_text'].apply(str.lower).apply(wordpunct_tokenize).apply(' '.join).apply(decoder).apply(stemmer.stem)
-# test['comment_text'] = test['comment_text'].apply(str.lower).apply(wordpunct_tokenize).apply(' '.join).apply(decoder).apply(stemmer.stem)
-
 max_features = 20000
+embed_size=128
 maxlen = 1000
 
-tokenizer = text.Tokenizer(num_words=max_features)
-tokenizer.fit_on_texts(list(train['comment_text']))
-list_tokenized_train = tokenizer.texts_to_sequences(train['comment_text'])
-list_tokenized_test = tokenizer.texts_to_sequences(test['comment_text'])
+using_pretrained_word2vec_model = True
+
+class EmbeddingWrapper(object):
+    def __init__(self, modelfile):
+        self.model = gensim.models.KeyedVectors.load_word2vec_format(modelfile, binary=True, encoding='ISO-8859-1')
+
+    def fit(self, texts):
+        self.vocab = {}
+        pos = 0
+        self.matrix = []
+        for sen in texts:
+            for term in sen.split():
+                if term in self.vocab:
+                    continue
+                if term in self.model.wv.vocab:
+                    self.vocab[term] = pos
+                    pos += 1
+                    self.matrix.append(self.model[term])
+
+    def transform(self, texts):
+        return [[self.vocab[term] for term in sen.split() if term in self.vocab] for sen in texts]
+
+
+if using_pretrained_word2vec_model:
+    ew = EmbeddingWrapper('./GoogleNews-vectors-negative300.bin')
+    ew.fit(list(train['comment_text']))
+
+    assert len(ew.vocab) == len(ew.matrix)
+    max_features = len(ew.vocab)
+    embed_size = len(ew.matrix[0])
+    print("max_features: {}  embed_size: {}".format(max_features, embed_size))
+    
+    list_tokenized_train = ew.transform(list(train['comment_text']))
+    list_tokenized_test = ew.transform(list(test['comment_text']))
+else:
+    tokenizer = text.Tokenizer(num_words=max_features)
+    tokenizer.fit_on_texts(list(train['comment_text']))
+    list_tokenized_train = tokenizer.texts_to_sequences(train['comment_text'])
+    list_tokenized_test = tokenizer.texts_to_sequences(test['comment_text'])
 
 train_doc = sequence.pad_sequences(list_tokenized_train, maxlen=maxlen, padding='post', truncating='post')
 test_doc = sequence.pad_sequences(list_tokenized_test, maxlen=maxlen, padding='post', truncating='post')
@@ -72,10 +111,12 @@ test_doc = sequence.pad_sequences(list_tokenized_test, maxlen=maxlen, padding='p
 Part 3. model
 """
 
-def get_model():
-    embed_size = 128
+def get_model(ew=None):
     inp = Input(shape=(maxlen, ))
-    x = Embedding(max_features, embed_size)(inp)    # init embedding weights randomly
+    if ew is None:
+        x = Embedding(max_features, embed_size)(inp)
+    else:
+        x = Embedding(max_features, embed_size, weights=[np.array(ew.matrix)])(inp)
     x = Bidirectional(LSTM(50, return_sequences=True))(x)
     x = GlobalMaxPool1D()(x)
     x = Dropout(0.1)(x)
@@ -92,7 +133,10 @@ def get_model():
 Part 4. Validation
 """
 
-model = get_model()
+if using_pretrained_word2vec_model:
+    model = get_model(ew=ew)
+else:
+    model = get_model()
 batch_size = 32
 epochs = 10
 
