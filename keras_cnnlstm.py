@@ -52,7 +52,7 @@ Part 2. preprocessing
 """
 
 max_features = 20000
-embed_size = 128
+embed_size = 100
 maxlen = 1000
 nb_filters = 16
 filter_length = 3
