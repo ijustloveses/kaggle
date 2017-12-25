@@ -94,8 +94,17 @@ overall val loss: 0.0587647264905
 - tfidf 模型 TV()
 - rbf svm 模型 SVC(kernel='rbf', probability=True)
 
+```
+toxic val loss:  0.191127299909
+severe_toxic val loss:  0.0767971587352
+obscene val loss:  0.10445197993
+threat val loss:  0.0202111852735
+insult val loss:  0.128223987592
+identity_hate val loss:  0.049422686965
 
-
+overall val loss: 0.0950390497341
+```
+结果不如线性的好
 
 
 ### keras_bilstm.py
@@ -129,6 +138,9 @@ Epoch 3/10
 - validation_split = 1/4 
 
 ```
+71888/71888 [==============================] - 3609s - loss: 0.0777 - acc: 0.9745 - val_loss: 0.0613 - val_acc: 0.9786
+Epoch 2/10
+71888/71888 [==============================] - 3526s - loss: 0.0524 - acc: 0.9812 - val_loss: 0.0620 - val_acc: 0.9784ve
 ```
 
-提交 Kaggle
+结果并不好，还不如随机初始化的 Embedding weights

@@ -1,14 +1,5 @@
 # encoding: utf-8
 
-"""
-https://www.kaggle.com/CVxTz/keras-bidirectional-lstm-baseline-lb-0-051
-
-./GoogleNews-vectors-negative300.bin word2vec model 有 900000000 个字符，过大，直接使用 max_features = 900000000 训练会导致下面错误：
-UserWarning: Converting sparse IndexedSlices to a dense Tensor with 900000000 elements. This may consume a large amount of memory.
-
-故此，这里做了过滤，只保留训练语料中有的 words
-"""
-
 from __future__ import print_function
 import pandas as pd
 import numpy as np
@@ -17,7 +8,7 @@ from nltk.stem.snowball import EnglishStemmer
 from sklearn.model_selection import StratifiedKFold
 
 from keras.models import Model
-from keras.layers import Dense, Embedding, Input, LSTM, Bidirectional, GlobalMaxPool1D, Dropout
+from keras.layers import Dense, Embedding, Input, LSTM, Bidirectional, GlobalMaxPool1D, Dropout, Conv1D, MaxPooling1D
 from keras.preprocessing import text, sequence
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 
@@ -61,8 +52,16 @@ Part 2. preprocessing
 """
 
 max_features = 20000
-embed_size=128
+embed_size = 128
 maxlen = 1000
+nb_filters = 16
+filter_length = 3
+pool_length = 10
+padding = 'valid'
+activation = 'relu'
+rnn_size = 128
+batch_size = 64
+epochs = 10
 
 using_pretrained_word2vec_model = False
 
@@ -117,15 +116,15 @@ def get_model(ew=None):
         x = Embedding(max_features, embed_size)(inp)
     else:
         x = Embedding(max_features, embed_size, weights=[np.array(ew.matrix)])(inp)
-    x = Bidirectional(LSTM(50, return_sequences=True))(x)
-    x = GlobalMaxPool1D()(x)
-    x = Dropout(0.1)(x)
-    x = Dense(50, activation='relu')(x)
-    x = Dropout(0.1)(x)
+    # x = Dropout(0.25)(x)
+    x = Conv1D(filters=nb_filters, kernel_size=filter_length, padding=padding, activation=activation, strides=1)(x)
+    x = MaxPooling1D(pool_size=pool_length)(x)
+    x = LSTM(rnn_size)(x)
     x = Dense(6, activation='sigmoid')(x)        # 6 个分类一次性学习，或者说一套参数同时去 fit 所有的分类，而不是 6 套参数
     model = Model(inputs=inp, outputs=x)
     model.compile(loss='binary_crossentropy',    # same as log loss
                   optimizer='adam', metrics=['accuracy'])
+    model.summary()
     return model
 
 
@@ -137,8 +136,6 @@ if using_pretrained_word2vec_model:
     model = get_model(ew=ew)
 else:
     model = get_model()
-batch_size = 32
-epochs = 10
 
 file_path = "bilstm.best.hdf5"
 checkpoint = ModelCheckpoint(file_path, monitor='val_loss', verbose=1, save_best_only=True, mode='min')
@@ -154,4 +151,4 @@ preds = model.predict(test_doc)
 # dump to csv
 submit = pd.DataFrame({'id': sample['id']})
 submission = pd.concat([submit, pd.DataFrame(preds, columns=label_cols)], axis=1)
-submission.to_csv('submission.bilstm.csv', index=False)
+submission.to_csv('submission.cnnlstm.csv', index=False)
