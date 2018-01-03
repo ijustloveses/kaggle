@@ -11,6 +11,7 @@ from keras.models import Model
 from keras.layers import Dense, Embedding, Input, LSTM, Bidirectional, GlobalMaxPool1D, Dropout, Conv1D, MaxPooling1D
 from keras.preprocessing import text, sequence
 from keras.callbacks import EarlyStopping, ModelCheckpoint
+from sklearn.metrics import log_loss
 
 import gensim
 
@@ -88,7 +89,7 @@ class EmbeddingWrapper(object):
 
 if using_pretrained_word2vec_model:
     ew = EmbeddingWrapper('./GoogleNews-vectors-negative300.bin')
-    ew.fit(list(train['comment_text']))
+    ew.fit(list(train['comment_text']) + list(test['comment_text']))
 
     assert len(ew.vocab) == len(ew.matrix)
     max_features = len(ew.vocab)
@@ -141,12 +142,28 @@ file_path = "bilstm.best.hdf5"
 checkpoint = ModelCheckpoint(file_path, monitor='val_loss', verbose=1, save_best_only=True, mode='min')
 early = EarlyStopping(monitor='val_loss', mode='min', patience=3)
 
+pos = int(len(train) * 0.75)
+x_train = train_doc[0:pos]
+y_train = train[label_cols].values[0:pos]
+x_val = train_doc[pos:]
+y_val = train[label_cols].values[pos:]
 # 同时 fit in 6 个分类的结果
-model.fit(train_doc, train[label_cols].values, batch_size=batch_size, epochs=epochs,
-          validation_split=0.25, callbacks=[checkpoint, early])
+model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs,
+          validation_data=(x_val, y_val), callbacks=[checkpoint, early])
 
 model.load_weights(file_path)
+val_preds = model.predict(x_val)
 preds = model.predict(test_doc)
+
+# show validataion result per class
+val_preds = pd.DataFrame(val_preds, columns=label_cols)
+val_labels = pd.DataFrame(y_val, columns=label_cols)
+for label in label_cols:
+    labels = val_labels[label]
+    logits = val_preds[label]
+    val_loss = log_loss(labels.values, logits.values)
+    val_accuracy = (logits.apply(lambda x: int(x + 0.5)) == labels).apply(lambda x: 1 if x else 0).mean(0)
+    print("validation for label val_loss: {}  val_accuracy: {}".format(val_loss, val_accuracy))
 
 # dump to csv
 submit = pd.DataFrame({'id': sample['id']})

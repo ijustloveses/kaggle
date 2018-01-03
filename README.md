@@ -186,7 +186,7 @@ Epoch 6/10
 Epoch 7/10
 71888/71888 [==============================] - 90s - loss: 0.0396 - acc: 0.9852 - val_loss: 0.0535 - val_acc: 0.9810rove
 ```
-不如上面的 bi-lstm 的模型好，但是训练速度快了 30 多倍
+val_loss = 0.0513，不如上面的 bi-lstm 的模型好，但是训练速度快了 30 多倍
 
 ##### 尝试 2.
 
@@ -198,5 +198,16 @@ Epoch 6/10
 71872/71888 [============================>.] - ETA: 0s - loss: 0.0428 - acc: 0.9839Epoch 00005: val_loss improved from 0.05087 to 0.0571888/71888 [==============================] - 89s - loss: 0.0428 - acc: 0.9839 - val_loss: 0.0501 - val_acc: 0.9818
 Epoch 7/10
 71888/71888 [==============================] - 89s - loss: 0.0379 - acc: 0.9858 - val_loss: 0.0532 - val_acc: 0.9814rove
+```
+效果提高了一些，val_loss 降到 0.0501
+
+加入个分类结果：
+```
+validation for label val_loss: 0.225805420402  val_accuracy: 0.93765388307
+validation for label val_loss: 0.03612712786  val_accuracy: 0.989108208488
+validation for label val_loss: 0.122381331936  val_accuracy: 0.961649209198
+validation for label val_loss: 0.0183026931493  val_accuracy: 0.996619788841
+validation for label val_loss: 0.126337927815  val_accuracy: 0.957350915995
+validation for label val_loss: 0.0349878063004  val_accuracy: 0.992279764637
 ```
 
