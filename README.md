@@ -203,11 +203,17 @@ Epoch 7/10
 
 加入个分类结果：
 ```
-validation for label val_loss: 0.225805420402  val_accuracy: 0.93765388307
-validation for label val_loss: 0.03612712786  val_accuracy: 0.989108208488
-validation for label val_loss: 0.122381331936  val_accuracy: 0.961649209198
-validation for label val_loss: 0.0183026931493  val_accuracy: 0.996619788841
-validation for label val_loss: 0.126337927815  val_accuracy: 0.957350915995
-validation for label val_loss: 0.0349878063004  val_accuracy: 0.992279764637
+validation for toxic - val_loss: 0.111352190379  val_accuracy: 0.960522472145  precise: 1788/2216  callback: 1788/2306.0
+validation for severe_toxic - val_loss: 0.0254191795236  val_accuracy: 0.989650711514  precise: 15/24  callback: 15/254.0
+validation for obscene - val_loss: 0.0552941343344  val_accuracy: 0.979343154029  precise: 1021/1253  callback: 1021/1284.0
+validation for threat - val_loss: 0.0138899027165  val_accuracy: 0.997162291867  precise: 0/0  callback: 0/68.0
+validation for insult - val_loss: 0.0698304903719  val_accuracy: 0.970955222635  precise: 865/1203  callback: 865/1223.0
+validation for identity_hate - val_loss: 0.0276717319624  val_accuracy: 0.992196302633  precise: 0/0  callback: 0/187.0
 ```
+我们看到
 
+1. 总体来看，恶意的评论数量过少，属于 imbalance 的分类问题
+2. toxic，obscene，insult 三个分类的数据相对还能多一些，结果不是很难看，虽然远称不上好
+3. severe_toxic，threat，identity_hate 三个分类的数据就少得可怜了，结果也非常差，就是说基本上不会被标记到。由于 TrueNagative 非常高，所以 log_loss 结果倒是比上面的 3 个分类还好看一些 ... 由于本次比赛评分规则的原因，故此其实就算这三个分类全部都标记为 Negative，影响其实也没有多大 ...
+
+故此，相对重要的是，解决 2 中三个分类的问题

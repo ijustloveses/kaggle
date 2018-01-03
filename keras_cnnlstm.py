@@ -26,6 +26,7 @@ test = pd.read_csv('./data/test.csv')
 sample = pd.read_csv('./data/sample_submission.csv')
 
 label_cols = ['toxic', 'severe_toxic', 'obscene', 'threat', 'insult', 'identity_hate']
+# label_cols = ['toxic', 'obscene', 'insult']
 # like：1 0 1 0 0 0，故此如果被分类为任何一种 toxic，那么 none 为 0；未被分为任何一钟 toxic，那么 none 就为 1
 train['none'] = 1 - train[label_cols].max(axis=1)
 # train.describe()
@@ -121,7 +122,7 @@ def get_model(ew=None):
     x = Conv1D(filters=nb_filters, kernel_size=filter_length, padding=padding, activation=activation, strides=1)(x)
     x = MaxPooling1D(pool_size=pool_length)(x)
     x = LSTM(rnn_size)(x)
-    x = Dense(6, activation='sigmoid')(x)        # 6 个分类一次性学习，或者说一套参数同时去 fit 所有的分类，而不是 6 套参数
+    x = Dense(len(label_cols), activation='sigmoid')(x)        # label_cols 个分类一次性学习，或者说一套参数同时去 fit 所有的分类，而不是 6 套参数
     model = Model(inputs=inp, outputs=x)
     model.compile(loss='binary_crossentropy',    # same as log loss
                   optimizer='adam', metrics=['accuracy'])
@@ -162,8 +163,12 @@ for label in label_cols:
     labels = val_labels[label]
     logits = val_preds[label]
     val_loss = log_loss(labels.values, logits.values)
-    val_accuracy = (logits.apply(lambda x: int(x + 0.5)) == labels).apply(lambda x: 1 if x else 0).mean(0)
-    print("validation for label val_loss: {}  val_accuracy: {}".format(val_loss, val_accuracy))
+    logits = logits.apply(lambda x: int(x + 0.5))  # 转为 0/1，而不再是 probs
+    val_accuracy = (logits == labels).apply(lambda x: 1 if x else 0).mean(0)
+    num_true_label = np.sum(labels.values)
+    num_true_preds = np.sum(logits.values)
+    num_correct_preds = (logits + labels).apply(lambda x: 1 if x == 2 else 0).sum()   # num. of logits == 1 && labels == 1
+    print("validation for {} - val_loss: {}  val_accuracy: {}  precise: {}/{}  callback: {}/{}".format(label, val_loss, val_accuracy, num_correct_preds, num_true_preds, num_correct_preds, num_true_label))
 
 # dump to csv
 submit = pd.DataFrame({'id': sample['id']})
