@@ -217,3 +217,18 @@ validation for identity_hate - val_loss: 0.0276717319624  val_accuracy: 0.992196
 3. severe_toxic，threat，identity_hate 三个分类的数据就少得可怜了，结果也非常差，就是说基本上不会被标记到。由于 TrueNagative 非常高，所以 log_loss 结果倒是比上面的 3 个分类还好看一些 ... 由于本次比赛评分规则的原因，故此其实就算这三个分类全部都标记为 Negative，影响其实也没有多大 ...
 
 故此，相对重要的是，解决 2 中三个分类的问题
+
+
+### keras_cnnlstm_perclass.py
+
+前面 keras_cnnlstm 脚本对所有 6 个分类使用同一套网络参数；而 keras_cnnlstm_perclass 对每个分类分别 train 一个模型
+
+```
+validation for toxic - val_loss: 0.108966313533  val_accuracy: 0.960689396152  precise: 1565/1735  callback: 1565/2337.0
+validation for severe_toxic - val_loss: 0.0406221511241  val_accuracy: 0.989859366523  precise: 0/0  callback: 0/243.0
+validation for obscene - val_loss: 0.0608817155468  val_accuracy: 0.980511622084  precise: 1021/1232  callback: 1021/1277.0
+validation for threat - val_loss: 0.0206942275454  val_accuracy: 0.996953636857  precise: 0/0  callback: 0/73.0
+validation for insult - val_loss: 0.192788940922  val_accuracy: 0.949547218629  precise: 0/0  callback: 0/1209.0
+validation for identity_hate - val_loss: 0.0472568635022  val_accuracy: 0.991862454618  precise: 0/0  callback: 0/195.0
+```
+我们看到，似乎还没有前面的结果好
